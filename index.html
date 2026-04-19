@@ -164,31 +164,37 @@
       background: var(--white);
       box-shadow: var(--shadow);
       margin-top: 20px;
-      /* top/bottom padding only — iFrames touch the left and right edges */
-      padding: 28px 0 0;   /* kein bottom-padding – iFrame bestimmt die Höhe */
-      overflow: visible; height: auto;
+      padding: 28px 0 0;
+      overflow: visible;
+      height: auto;
     }
 
-    .iframe-slot { display: none; width: 100%; height: auto; overflow: visible; }
+    .iframe-slot {
+      display: none;
+      width: 100%;
+      /* Mindesthöhe damit der Container nicht kollabiert bevor das Widget-Skript lädt */
+      min-height: 600px;
+      height: auto;
+      overflow: visible;
+    }
     .iframe-slot.active { display: block; }
 
-    /* iFrame-Container: volle Breite, Höhe frei für externe Skripte */
+    /* iFrame-Container: volle Breite, Höhe NIEMALS per CSS begrenzen */
     .iframe-slot > div {
       width: 100% !important;
       min-width: 0 !important;
-      max-height: none;
+      max-height: none !important;
+      overflow: visible !important;
       display: block;
-      overflow: visible;
     }
 
-    /* Alle iFrames: Breite voll, Höhe NICHT per !important überschreiben
-       (externe Widget-Skripte setzen die Höhe per JS — !important würde das blockieren) */
+    /* iFrames: nur Breite erzwingen — Höhe komplett dem Widget-Skript überlassen */
     .iframe-slot iframe {
       width: 100% !important;
-      /* height wird vom externen Skript gesetzt – kein !important hier */
-      max-height: none;
-      border: none;
+      max-height: none !important;
+      border: none !important;
       display: block;
+      /* KEIN height-override — Widget setzt Höhe via JS/postMessage */
     }
 
     /* ─── INFO CARDS ─── */
@@ -395,6 +401,62 @@
 </footer>
 
 <script>
+  /* ── postMessage listener: fängt Höhen-Nachrichten der Widget-iFrames ab ── */
+  window.addEventListener('message', function(e) {
+    // Suche alle iFrames auf der Seite
+    document.querySelectorAll('iframe').forEach(function(iframe) {
+      // Prüfe ob die Nachricht von diesem iFrame kommt
+      try {
+        if (iframe.contentWindow === e.source) {
+          var data = e.data;
+          // Mögliche Datenformate der Widget-Skripte abfangen
+          var h = null;
+          if (typeof data === 'number' && data > 50) {
+            h = data;
+          } else if (typeof data === 'object' && data !== null) {
+            h = data.height || data.frameHeight || data.scrollHeight || null;
+          } else if (typeof data === 'string') {
+            var m = data.match(/\d+/);
+            if (m) h = parseInt(m[0]);
+          }
+          if (h && h > 50) {
+            iframe.style.height = h + 'px';
+            // Auch den Eltern-Slot auf auto setzen damit er mitwächst
+            var slot = iframe.closest('.iframe-slot');
+            if (slot) slot.style.minHeight = h + 'px';
+          }
+        }
+      } catch(err) {}
+    });
+  });
+
+  /* ── ResizeObserver: beobachtet iFrame-Elemente und dehnt den Container aus ── */
+  var ro = new ResizeObserver(function(entries) {
+    entries.forEach(function(entry) {
+      var iframe = entry.target;
+      var slot = iframe.closest('.iframe-slot');
+      if (slot && iframe.offsetHeight > 100) {
+        slot.style.minHeight = iframe.offsetHeight + 'px';
+      }
+    });
+  });
+  // Observer auf alle iFrames anwenden (auch nachträglich geladene)
+  function observeAllIframes() {
+    document.querySelectorAll('.iframe-slot iframe').forEach(function(iframe) {
+      ro.observe(iframe);
+    });
+  }
+  // MutationObserver: registriert neue iFrames sobald Widget-Skripte sie erstellen
+  var mo = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      m.addedNodes.forEach(function(node) {
+        if (node.tagName === 'IFRAME') ro.observe(node);
+        if (node.querySelectorAll) node.querySelectorAll('iframe').forEach(function(f) { ro.observe(f); });
+      });
+    });
+  });
+  mo.observe(document.body, { childList: true, subtree: true });
+
   /* ── Widget metadata ── */
   const meta = {
     kfz:      { icon: 'M18.92 5.01C18.72 4.42 18.16 4 17.5 4h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-6.99zM6.5 15a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm11 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM5 11l1.5-4.5h11L19 11H5z', title: 'KFZ-Versicherung vergleichen',        desc: 'Vergleichen Sie Kfz-Versicherungen und finden Sie den günstigsten Tarif für Ihr Fahrzeug.' },
