@@ -165,17 +165,29 @@
       box-shadow: var(--shadow);
       margin-top: 20px;
       /* top/bottom padding only — iFrames touch the left and right edges */
-      padding: 28px 0 36px;
-      overflow: hidden;
+      padding: 28px 0 0;   /* kein bottom-padding – iFrame bestimmt die Höhe */
+      overflow: visible; height: auto;
     }
 
-    .iframe-slot { display: none; width: 100%; }
+    .iframe-slot { display: none; width: 100%; height: auto; overflow: visible; }
     .iframe-slot.active { display: block; }
 
-    /* Force every direct child div (the iFrame containers) to be truly 100% wide */
+    /* iFrame-Container: volle Breite, Höhe niemals begrenzen */
     .iframe-slot > div {
       width: 100% !important;
       min-width: 0 !important;
+      height: auto !important;
+      max-height: none !important;
+      display: block;
+      overflow: visible;
+    }
+
+    /* Alle iFrames innerhalb der Slots: Höhe frei, kein Clipping */
+    .iframe-slot iframe {
+      width: 100% !important;
+      height: auto !important;
+      max-height: none !important;
+      border: none;
       display: block;
     }
 
