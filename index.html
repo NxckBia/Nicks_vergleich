@@ -172,21 +172,21 @@
     .iframe-slot { display: none; width: 100%; height: auto; overflow: visible; }
     .iframe-slot.active { display: block; }
 
-    /* iFrame-Container: volle Breite, Höhe niemals begrenzen */
+    /* iFrame-Container: volle Breite, Höhe frei für externe Skripte */
     .iframe-slot > div {
       width: 100% !important;
       min-width: 0 !important;
-      height: auto !important;
-      max-height: none !important;
+      max-height: none;
       display: block;
       overflow: visible;
     }
 
-    /* Alle iFrames innerhalb der Slots: Höhe frei, kein Clipping */
+    /* Alle iFrames: Breite voll, Höhe NICHT per !important überschreiben
+       (externe Widget-Skripte setzen die Höhe per JS — !important würde das blockieren) */
     .iframe-slot iframe {
       width: 100% !important;
-      height: auto !important;
-      max-height: none !important;
+      /* height wird vom externen Skript gesetzt – kein !important hier */
+      max-height: none;
       border: none;
       display: block;
     }
