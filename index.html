@@ -315,51 +315,66 @@
   </div>
 
   <!-- ── WIDGET ZONE – echte volle Breite, kein seitlicher Abstand ── -->
+  <!--
+    WICHTIG: Die Affiliate-Skripte stehen hier NICHT mehr als <script>-Tag,
+    sondern im Attribut data-widget-src. Sie werden erst geladen, wenn der
+    jeweilige Rechner sichtbar ist. Vorher wurden alle 9 Rechner gleichzeitig
+    in unsichtbaren Bereichen (display:none) gestartet – dabei messen die
+    Widgets Breite/Höhe 0 und werden leer oder falsch angezeigt.
+
+    Neuen Affiliate-Code einbauen:
+      1. <div ... id="..."></div> aus dem Partnercode in einen neuen Slot kopieren
+      2. die src-Adresse des <script> aus dem Partnercode in data-widget-src eintragen
+  -->
   <div class="widget-zone">
 
     <!-- Versicherung -->
-    <div class="iframe-slot active" id="slot-kfz">
+    <div class="iframe-slot active" id="slot-kfz"
+         data-widget-src="https://form.partner-versicherung.de/widgets/98100/tcpp-iframe-kfz/kfz-iframe.js">
       <div style="width:100%" id="tcpp-iframe-kfz"></div>
-      <script src="https://form.partner-versicherung.de/widgets/98100/tcpp-iframe-kfz/kfz-iframe.js"></script>
     </div>
-    <div class="iframe-slot" id="slot-phv">
+    <div class="iframe-slot" id="slot-phv"
+         data-widget-src="https://form.partner-versicherung.de/widgets/98100/tcpp-iframe-phv/phv-iframe.js">
       <div style="width:100%" id="tcpp-iframe-phv"></div>
-      <script src="https://form.partner-versicherung.de/widgets/98100/tcpp-iframe-phv/phv-iframe.js"></script>
     </div>
-    <div class="iframe-slot" id="slot-hr">
+    <div class="iframe-slot" id="slot-hr"
+         data-widget-src="https://form.partner-versicherung.de/widgets/98100/tcpp-iframe-hr/hr-iframe.js">
       <div style="width:100%" id="tcpp-iframe-hr"></div>
-      <script src="https://form.partner-versicherung.de/widgets/98100/tcpp-iframe-hr/hr-iframe.js"></script>
     </div>
-    <div class="iframe-slot" id="slot-wg">
+    <div class="iframe-slot" id="slot-wg"
+         data-widget-src="https://form.partner-versicherung.de/widgets/98100/tcpp-iframe-wg/wg-iframe.js">
       <div style="width:100%" id="tcpp-iframe-wg"></div>
-      <script src="https://form.partner-versicherung.de/widgets/98100/tcpp-iframe-wg/wg-iframe.js"></script>
     </div>
-    <div class="iframe-slot" id="slot-rs">
+    <div class="iframe-slot" id="slot-rs"
+         data-widget-src="https://form.partner-versicherung.de/widgets/98100/tcpp-iframe-rs/rs-iframe.js">
       <div style="width:100%" id="tcpp-iframe-rs"></div>
-      <script src="https://form.partner-versicherung.de/widgets/98100/tcpp-iframe-rs/rs-iframe.js"></script>
     </div>
 
     <!-- Energie -->
-    <div class="iframe-slot" id="slot-strom">
+    <div class="iframe-slot" id="slot-strom"
+         data-widget-src="https://files.check24.net/widgets/auto/129018/c24pp-power-iframe/power-iframe.js">
       <div style="width:100%" id="c24pp-power-iframe" data-scrollto="begin"></div>
-      <script src="https://files.check24.net/widgets/auto/129018/c24pp-power-iframe/power-iframe.js"></script>
     </div>
-    <div class="iframe-slot" id="slot-gas">
+    <div class="iframe-slot" id="slot-gas"
+         data-widget-src="https://files.check24.net/widgets/auto/129018/c24pp-gas-iframe/gas-iframe.js">
       <div style="width:100%" id="c24pp-gas-iframe" data-scrollto="begin"></div>
-      <script src="https://files.check24.net/widgets/auto/129018/c24pp-gas-iframe/gas-iframe.js"></script>
     </div>
 
     <!-- Internet -->
-    <div class="iframe-slot" id="slot-internet">
+    <div class="iframe-slot" id="slot-internet"
+         data-widget-src="https://files.check24.net/widgets/auto/129018/c24pp-dsl-iframe/dsl-iframe.js">
       <div style="width:100%" id="c24pp-dsl-iframe"></div>
-      <script src="https://files.check24.net/widgets/auto/129018/c24pp-dsl-iframe/dsl-iframe.js"></script>
     </div>
 
     <!-- Reise -->
-    <div class="iframe-slot" id="slot-reise">
+    <div class="iframe-slot" id="slot-reise"
+         data-widget-src="https://files.check24.net/widgets/auto/129018/c24pp-package-iframe/package-iframe.js">
       <div style="width:100%" id="c24pp-package-iframe" data-offer="allgemein" data-scrollto="begin" data-forward-url="no"></div>
-      <script src="https://files.check24.net/widgets/auto/129018/c24pp-package-iframe/package-iframe.js"></script>
     </div>
+
+    <noscript>
+      <p style="padding:24px 5vw">Bitte aktivieren Sie JavaScript, um die Vergleichsrechner zu nutzen.</p>
+    </noscript>
 
   </div><!-- /widget-zone -->
 </section>
@@ -401,61 +416,26 @@
 </footer>
 
 <script>
-  /* ── postMessage listener: fängt Höhen-Nachrichten der Widget-iFrames ab ── */
-  window.addEventListener('message', function(e) {
-    // Suche alle iFrames auf der Seite
-    document.querySelectorAll('iframe').forEach(function(iframe) {
-      // Prüfe ob die Nachricht von diesem iFrame kommt
-      try {
-        if (iframe.contentWindow === e.source) {
-          var data = e.data;
-          // Mögliche Datenformate der Widget-Skripte abfangen
-          var h = null;
-          if (typeof data === 'number' && data > 50) {
-            h = data;
-          } else if (typeof data === 'object' && data !== null) {
-            h = data.height || data.frameHeight || data.scrollHeight || null;
-          } else if (typeof data === 'string') {
-            var m = data.match(/\d+/);
-            if (m) h = parseInt(m[0]);
-          }
-          if (h && h > 50) {
-            iframe.style.height = h + 'px';
-            // Auch den Eltern-Slot auf auto setzen damit er mitwächst
-            var slot = iframe.closest('.iframe-slot');
-            if (slot) slot.style.minHeight = h + 'px';
-          }
-        }
-      } catch(err) {}
-    });
-  });
-
-  /* ── ResizeObserver: beobachtet iFrame-Elemente und dehnt den Container aus ── */
-  var ro = new ResizeObserver(function(entries) {
-    entries.forEach(function(entry) {
-      var iframe = entry.target;
-      var slot = iframe.closest('.iframe-slot');
-      if (slot && iframe.offsetHeight > 100) {
-        slot.style.minHeight = iframe.offsetHeight + 'px';
-      }
-    });
-  });
-  // Observer auf alle iFrames anwenden (auch nachträglich geladene)
-  function observeAllIframes() {
-    document.querySelectorAll('.iframe-slot iframe').forEach(function(iframe) {
-      ro.observe(iframe);
-    });
+  /* ── Affiliate-Widgets erst laden, wenn sie sichtbar sind ──
+     Die Partner-Skripte (Tarifrechner) bauen ihr iFrame selbst und regeln
+     die Höhe selbst. Wir laden jedes Skript genau einmal – in dem Moment,
+     in dem der Rechner angezeigt wird. Dadurch hat das Widget beim Start
+     die richtige Breite, und die Seite springt beim Laden nicht hin und her. */
+  function loadWidget(slot) {
+    if (!slot || slot.dataset.widgetLoaded) return;
+    var src = slot.dataset.widgetSrc;
+    if (!src) return;
+    slot.dataset.widgetLoaded = 'true';
+    var s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.onerror = function () {
+      slot.insertAdjacentHTML('beforeend',
+        '<p style="padding:24px 5vw;color:#8898b8">Der Vergleichsrechner konnte nicht geladen werden. ' +
+        'Bitte deaktivieren Sie ggf. Ihren Werbeblocker für diese Seite und laden Sie sie neu.</p>');
+    };
+    slot.appendChild(s);
   }
-  // MutationObserver: registriert neue iFrames sobald Widget-Skripte sie erstellen
-  var mo = new MutationObserver(function(mutations) {
-    mutations.forEach(function(m) {
-      m.addedNodes.forEach(function(node) {
-        if (node.tagName === 'IFRAME') ro.observe(node);
-        if (node.querySelectorAll) node.querySelectorAll('iframe').forEach(function(f) { ro.observe(f); });
-      });
-    });
-  });
-  mo.observe(document.body, { childList: true, subtree: true });
 
   /* ── Widget metadata ── */
   const meta = {
@@ -476,8 +456,13 @@
     document.getElementById('widgetTitle').textContent = m.title;
     document.getElementById('widgetDesc').textContent  = m.desc;
     document.querySelectorAll('.iframe-slot').forEach(s => s.classList.remove('active'));
-    document.getElementById('slot-' + key).classList.add('active');
+    const slot = document.getElementById('slot-' + key);
+    slot.classList.add('active');
+    loadWidget(slot);
   }
+
+  /* Beim Seitenaufruf nur den sichtbaren Rechner (KFZ) laden */
+  loadWidget(document.querySelector('.iframe-slot.active'));
 
   /* Main tabs */
   document.querySelectorAll('#mainTabs .tab-btn').forEach(btn => {
